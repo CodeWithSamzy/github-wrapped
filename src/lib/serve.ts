@@ -61,7 +61,10 @@ export async function resolveWrapped(raw: string): Promise<WrappedLookup> {
     const wrapped = isViewer
       ? await buildWrappedForViewer(token)
       : await buildWrappedForLogin(token, login);
-    await writeSnapshot(wrapped);
+    // Only public builds are cached. A viewer's own build is authenticated, so
+    // GitHub folds in their private contributions there; caching it would then
+    // serve those totals to everyone who opens /wrapped/<login>.
+    if (!isViewer) await writeSnapshot(wrapped);
     return { status: "ok", wrapped, source: "github", stale: false };
   } catch (error) {
     if (error instanceof GitHubApiError) {
