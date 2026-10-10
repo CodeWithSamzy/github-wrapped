@@ -1,0 +1,12 @@
+# Local secrets must never be uploaded to a deployment.
+.env
+.env.*
+!.env.example
+
+# Local build/test artefacts
+.next
+node_modules
+coverage
+*.tsbuildinfo
+.vercel
+.deploy-tmp

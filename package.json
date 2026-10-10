@@ -1,0 +1,43 @@
+{
+  "name": "github-wrapped",
+  "version": "0.1.0",
+  "author": "codewithsamzy <https://github.com/codewithsamzy>",
+  "homepage": "https://githubwrapped-app.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codewithsamzy/github-wrapped.git"
+  },
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "fonts": "node scripts/fetch-fonts.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "next-auth": "5.0.0-beta.32",
+    "postgres": "3.4.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

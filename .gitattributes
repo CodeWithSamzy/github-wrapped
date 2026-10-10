@@ -1,0 +1,11 @@
+# Normalise line endings so the repo is consistent across platforms.
+* text=auto eol=lf
+
+# Binary assets
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.ico binary
