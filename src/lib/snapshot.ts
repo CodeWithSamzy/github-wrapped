@@ -8,9 +8,10 @@ import type {
   WeekdayBucket,
   Wrapped,
   WrappedStats,
+  WrappedWindowKind,
 } from "./types";
 
-export const WRAPPED_VERSION = 1;
+export const WRAPPED_VERSION = 2;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -18,6 +19,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isString = (value: unknown): value is string => typeof value === "string";
 const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const isNullableString = (value: unknown): value is string | null => value === null || isString(value);
+
+const WINDOW_KINDS: readonly WrappedWindowKind[] = ["rolling", "year"];
+const isWindowKind = (value: unknown): value is WrappedWindowKind =>
+  isString(value) && (WINDOW_KINDS as readonly string[]).includes(value);
 
 function isTotals(value: unknown): value is ContributionTotals {
   return (
@@ -107,7 +112,9 @@ export function parseWrapped(value: unknown): Wrapped | null {
   if (!isString(value.profile.username) || !isNullableString(value.profile.name) || !isString(value.profile.avatarUrl)) {
     return null;
   }
+  if (!isString(value.profile.createdAt)) return null;
   if (!isRecord(value.window) || !isString(value.window.from) || !isString(value.window.to)) return null;
+  if (!isWindowKind(value.window.kind)) return null;
   if (!isString(value.generatedAt)) return null;
   if (!isStats(value.stats)) return null;
 
@@ -117,8 +124,9 @@ export function parseWrapped(value: unknown): Wrapped | null {
       username: value.profile.username,
       name: value.profile.name,
       avatarUrl: value.profile.avatarUrl,
+      createdAt: value.profile.createdAt,
     },
-    window: { from: value.window.from, to: value.window.to },
+    window: { from: value.window.from, to: value.window.to, kind: value.window.kind },
     generatedAt: value.generatedAt,
     stats: value.stats,
   };
@@ -131,4 +139,3 @@ export function parseWrappedJson(json: string): Wrapped | null {
     return null;
   }
 }
-

@@ -197,3 +197,11 @@
   outline: 2px solid var(--color-accent-soft);
   outline-offset: 3px;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

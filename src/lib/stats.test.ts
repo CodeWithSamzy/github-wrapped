@@ -272,6 +272,7 @@ describe("computeStats", () => {
     username: "octocat",
     name: "The Octocat",
     avatarUrl: "https://example.com/avatar.png",
+    createdAt: "2011-01-25T18:44:36Z",
     followers: 42,
     ownedRepositories: 7,
     stars: 1234,

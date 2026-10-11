@@ -14,7 +14,8 @@ Live: **https://githubwrapped-app.vercel.app** - built by
 ## What it does
 
 - **Sign in with GitHub** (OAuth, read-only scopes).
-- **Pulls your last 12 months of activity** from GitHub's GraphQL API.
+- **Pulls your activity** from GitHub's GraphQL API: the rolling last 12
+  months, or any single calendar year back to 2008.
 - **Shows animated stat cards**, one idea per slide:
   - Total contributions and commits
   - Busiest month and busiest day of the week
@@ -24,8 +25,13 @@ Live: **https://githubwrapped-app.vercel.app** - built by
   - Stars received and new followers
 - **Generates a shareable image card** with your headline stats, ready to
   download or post.
-- **Gives every result a public link** (`/wrapped/<username>`) so the card
-  can be viewed without signing in again.
+- **Gives every result a public link** so the card can be viewed without
+  signing in again:
+  - `/wrapped/<username>` - the rolling last 12 months
+  - `/wrapped/<username>/<year>` - one calendar year, for example
+    `/wrapped/octocat/2024`
+- **Switches years from inside the deck** - the floating bar lists every year
+  the account has existed, and the deck carries a "Year by year" slide.
 
 ## How the numbers are calculated
 
@@ -38,6 +44,9 @@ Live: **https://githubwrapped-app.vercel.app** - built by
 | Top repositories | `commitContributionsByRepository` |
 | Stars / followers | Standard user and repository fields |
 
+Each year is cached separately (a finished year for 30 days, the current one
+for 24 hours).
+
 Streaks and monthly totals depend on how "a day" is defined. This app uses
 UTC dates from GitHub's calendar, so numbers may differ slightly from your
 local-time expectations.
@@ -48,8 +57,10 @@ local-time expectations.
   you've enabled *Include private contributions on my profile* in your GitHub
   settings. They show up in totals and the calendar, but with no repository or
   language detail.
-- **One-year window:** the GraphQL `contributionsCollection` covers at most
-  one year per query, so this is a rolling last-12-months view.
+- **One year per query:** the GraphQL `contributionsCollection` covers at most
+  one year, so the app offers either the rolling last 12 months or one calendar
+  year at a time. Calendar years are UTC, so a year wrapped here may differ by a
+  day or two from your local timezone's idea of that year.
 - **Language percentages** measure bytes of code in repositories you own or
   contribute to, which is not the same as time spent.
 

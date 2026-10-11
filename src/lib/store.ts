@@ -1,21 +1,43 @@
 import postgres from "postgres";
 import { parseWrapped } from "./snapshot";
-import type { StoredSnapshot, Wrapped } from "./types";
+import { windowYear } from "./window";
+import type { StoredSnapshot, Wrapped, WrappedWindow } from "./types";
 
 /** Result of a snapshot lookup, including whether it is still within its TTL. */
 export type SnapshotRecord = StoredSnapshot & { fresh: boolean };
 
+/**
+ * Which wrapped a cached row belongs to: the rolling last-twelve-months view,
+ * or one specific calendar year.
+ */
+export type SnapshotScope = "rolling" | number;
+
 const DEFAULT_TTL_HOURS = 24;
+/** A calendar year that has already ended can never change again. */
+const SETTLED_YEAR_TTL_HOURS = 24 * 30;
 const MS_PER_HOUR = 3_600_000;
 
-export function snapshotTtlHours(): number {
-  const raw = Number(process.env.WRAPPED_SNAPSHOT_TTL_HOURS);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TTL_HOURS;
+export function snapshotTtlHours(wrapped?: Wrapped): number {
+  const override = Number(process.env.WRAPPED_SNAPSHOT_TTL_HOURS);
+  if (Number.isFinite(override) && override > 0) return override;
+
+  const year = wrapped ? windowYear(wrapped.window) : null;
+  if (year !== null && year < new Date().getUTCFullYear()) return SETTLED_YEAR_TTL_HOURS;
+  return DEFAULT_TTL_HOURS;
 }
 
-/** GitHub logins are case-insensitive, so storage keys are lowercased. */
-export function snapshotKey(username: string): string {
-  return username.trim().toLowerCase();
+/** The scope a built wrapped should be cached under. */
+export function scopeForWindow(window: WrappedWindow): SnapshotScope {
+  return windowYear(window) ?? "rolling";
+}
+
+/**
+ * Cache key for one login and scope. GitHub logins are case-insensitive, so the
+ * login is lowercased; the scope suffix keeps each calendar year - and the
+ * rolling window - in its own row.
+ */
+export function snapshotKey(username: string, scope: SnapshotScope = "rolling"): string {
+  return `${username.trim().toLowerCase()}:${scope}`;
 }
 
 export type StorageMode = "postgres" | "memory";
@@ -49,6 +71,11 @@ function sqlClient(): Sql | null {
 
 let schemaReady: Promise<void> | null = null;
 
+/**
+ * `username` holds the full scoped cache key (`octocat:2024`), not a bare
+ * login - the column predates per-year wrappeds and renaming it would mean a
+ * migration for a table that is only ever created, never queried by hand.
+ */
 async function ensureSchema(sql: Sql): Promise<void> {
   schemaReady ??= (async () => {
     await sql`
@@ -68,11 +95,11 @@ async function ensureSchema(sql: Sql): Promise<void> {
 }
 
 /**
- * Persists a snapshot, replacing any previous one for the same login.
+ * Persists a snapshot, replacing any previous one for the same login and scope.
  * Never throws: caching is best-effort and must not break the request.
  */
-export async function writeSnapshot(wrapped: Wrapped, ttlHours = snapshotTtlHours()): Promise<boolean> {
-  const key = snapshotKey(wrapped.profile.username);
+export async function writeSnapshot(wrapped: Wrapped, ttlHours = snapshotTtlHours(wrapped)): Promise<boolean> {
+  const key = snapshotKey(wrapped.profile.username, scopeForWindow(wrapped.window));
   const capturedAt = new Date();
   const expiresAt = new Date(capturedAt.getTime() + ttlHours * MS_PER_HOUR);
   const sql = sqlClient();
@@ -107,8 +134,12 @@ export async function writeSnapshot(wrapped: Wrapped, ttlHours = snapshotTtlHour
  * Reads a snapshot. Returns `null` on any failure so a broken cache degrades
  * into a recompute rather than a 500.
  */
-export async function readSnapshot(username: string, now: Date = new Date()): Promise<SnapshotRecord | null> {
-  const key = snapshotKey(username);
+export async function readSnapshot(
+  username: string,
+  scope: SnapshotScope = "rolling",
+  now: Date = new Date(),
+): Promise<SnapshotRecord | null> {
+  const key = snapshotKey(username, scope);
   const sql = sqlClient();
 
   if (!sql) {

@@ -12,6 +12,7 @@ export function createWrapped(input: WrappedInput, window: WrappedWindow, genera
       username: input.username,
       name: input.name,
       avatarUrl: input.avatarUrl,
+      createdAt: input.createdAt,
     },
     window,
     generatedAt: generatedAt.toISOString(),
@@ -19,24 +20,26 @@ export function createWrapped(input: WrappedInput, window: WrappedWindow, genera
   };
 }
 
-/** Builds the wrapped for whoever owns the given token. */
-export async function buildWrappedForViewer(
-  token: string,
-  options?: { now?: Date; request?: GraphQLRequestOptions },
-): Promise<Wrapped> {
-  const viewer = await fetchViewer(token, options?.request);
-  const window = buildWindow(options?.now);
-  const input = await fetchWrappedInput(token, viewer.login, window, options?.request);
+export type BuildWrappedOptions = {
+  now?: Date;
+  request?: GraphQLRequestOptions;
+  /** Defaults to the rolling last-twelve-months window. */
+  window?: WrappedWindow;
+};
+
+async function buildForLogin(token: string, login: string, options?: BuildWrappedOptions): Promise<Wrapped> {
+  const window = options?.window ?? buildWindow(options?.now);
+  const input = await fetchWrappedInput(token, login, window, options?.request);
   return createWrapped(input, window, options?.now);
 }
 
+/** Builds the wrapped for whoever owns the given token. */
+export async function buildWrappedForViewer(token: string, options?: BuildWrappedOptions): Promise<Wrapped> {
+  const viewer = await fetchViewer(token, options?.request);
+  return buildForLogin(token, viewer.login, options);
+}
+
 /** Builds the wrapped for an arbitrary public login. */
-export async function buildWrappedForLogin(
-  token: string,
-  login: string,
-  options?: { now?: Date; request?: GraphQLRequestOptions },
-): Promise<Wrapped> {
-  const window = buildWindow(options?.now);
-  const input = await fetchWrappedInput(token, login, window, options?.request);
-  return createWrapped(input, window, options?.now);
+export function buildWrappedForLogin(token: string, login: string, options?: BuildWrappedOptions): Promise<Wrapped> {
+  return buildForLogin(token, login, options);
 }

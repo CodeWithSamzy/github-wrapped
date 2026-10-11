@@ -3,9 +3,14 @@ import { WRAPPED_VERSION, parseWrapped, parseWrappedJson } from "./snapshot";
 import type { Wrapped } from "./types";
 
 const wrapped: Wrapped = {
-  version: 1,
-  profile: { username: "octocat", name: "The Octocat", avatarUrl: "https://example.com/a.png" },
-  window: { from: "2025-10-09T00:00:00.000Z", to: "2026-10-08T00:00:00.000Z" },
+  version: 2,
+  profile: {
+    username: "octocat",
+    name: "The Octocat",
+    avatarUrl: "https://example.com/a.png",
+    createdAt: "2011-01-25T18:44:36Z",
+  },
+  window: { from: "2025-10-09T00:00:00.000Z", to: "2026-10-08T00:00:00.000Z", kind: "rolling" },
   generatedAt: "2026-10-08T00:00:00.000Z",
   stats: {
     totals: { contributions: 10, commits: 4, pullRequests: 1, issues: 2, reviews: 3, restricted: 0 },
@@ -44,8 +49,27 @@ describe("parseWrapped", () => {
     expect(parseWrapped(wrapped)).toEqual(wrapped);
   });
 
+  it("round-trips a calendar-year snapshot", () => {
+    const year = { ...wrapped, window: { ...wrapped.window, kind: "year" as const } };
+    expect(parseWrapped(year)).toEqual(year);
+  });
+
   it("rejects a version it does not understand", () => {
-    expect(parseWrapped({ ...wrapped, version: 2 })).toBeNull();
+    expect(parseWrapped({ ...wrapped, version: 3 })).toBeNull();
+    expect(parseWrapped({ ...wrapped, version: 1 })).toBeNull();
+  });
+
+  it("rejects a snapshot with no account creation date", () => {
+    const { createdAt, ...profile } = wrapped.profile;
+    void createdAt;
+    expect(parseWrapped({ ...wrapped, profile })).toBeNull();
+  });
+
+  it("rejects an unknown window kind", () => {
+    expect(parseWrapped({ ...wrapped, window: { ...wrapped.window, kind: "decade" } })).toBeNull();
+    const { kind, ...rest } = wrapped.window;
+    void kind;
+    expect(parseWrapped({ ...wrapped, window: rest })).toBeNull();
   });
 
   it("rejects payloads missing a required stat", () => {
@@ -73,6 +97,6 @@ describe("parseWrappedJson", () => {
 
 describe("WRAPPED_VERSION", () => {
   it("is what parseWrapped validates against", () => {
-    expect(WRAPPED_VERSION).toBe(1);
+    expect(WRAPPED_VERSION).toBe(2);
   });
 });

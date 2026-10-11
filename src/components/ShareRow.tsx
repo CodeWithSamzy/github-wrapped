@@ -6,6 +6,8 @@ type ShareRowProps = {
   username: string;
   url: string;
   cardUrl: string;
+  /** File name for the downloaded PNG. Defaults to the rolling window. */
+  filename?: string;
 };
 
 async function copyText(text: string): Promise<boolean> {
@@ -40,7 +42,7 @@ function scrollDeckToStart() {
 const buttonBase =
   "focus-ring inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60";
 
-export function ShareRow({ username, url, cardUrl }: ShareRowProps) {
+export function ShareRow({ username, url, cardUrl, filename }: ShareRowProps) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [manualCopy, setManualCopy] = useState(false);
@@ -72,7 +74,7 @@ export function ShareRow({ username, url, cardUrl }: ShareRowProps) {
     try {
       await navigator.share({
         title: `@${username} on GitHub Wrapped`,
-        text: `My last twelve months of code, wrapped.`,
+        text: `My year in code, wrapped.`,
         url: absoluteUrl,
       });
     } catch {
@@ -104,7 +106,7 @@ export function ShareRow({ username, url, cardUrl }: ShareRowProps) {
 
         <a
           href={cardUrl}
-          download={`github-wrapped-${username}.png`}
+          download={filename ?? `github-wrapped-${username}.png`}
           className={`${buttonBase} border border-line bg-white/5 text-mist hover:bg-white/10`}
         >
           Download PNG

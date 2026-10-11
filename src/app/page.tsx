@@ -11,7 +11,7 @@ type HomePageProps = {
 const HIGHLIGHTS = [
   {
     title: "The numbers",
-    body: "Contributions, commits, pull requests, issues, and reviews for the last twelve months.",
+    body: "Contributions, commits, pull requests, issues, and reviews for the last twelve months, or any calendar year.",
   },
   {
     title: "The shape of the year",
@@ -66,8 +66,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </h1>
 
         <p className="max-w-xl text-base leading-relaxed text-mist/80">
-          Connect GitHub and we read the last twelve months of your contributions, then turn them into a set of
-          animated stat cards and a shareable image. Read-only access, nothing stored beyond the session.
+          Connect GitHub and we read your contributions, the last twelve months or a single calendar year, then
+          turn them into a set of animated stat cards and a shareable image. Read-only access, nothing stored
+          beyond the session.
         </p>
 
         <div className="flex flex-wrap items-center gap-3">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { CountUp } from "@/components/CountUp";
 import { ContributionHeatmap } from "@/components/ContributionHeatmap";
@@ -89,11 +90,26 @@ function Stat({
   );
 }
 
+export type SlideOptions = {
+  /** Calendar years this account can also be wrapped for, newest first. */
+  years?: number[];
+  /** The year this wrapped covers, or `null` for the rolling window. */
+  activeYear?: number | null;
+};
+
 /** Builds every slide for a wrapped. Pure: same input, same slides. */
-export function buildSlides(wrapped: Wrapped): Slide[] {
+export function buildSlides(wrapped: Wrapped, options: SlideOptions = {}): Slide[] {
   const { profile, stats, window } = wrapped;
   const displayName = profile.name ?? `@${profile.username}`;
   const range = formatRange(window.from, window.to);
+  const activeYear = options.activeYear ?? null;
+  const years = options.years ?? [];
+  const basePath = `/wrapped/${encodeURIComponent(profile.username)}`;
+  const sharePath = activeYear === null ? basePath : `${basePath}/${activeYear}`;
+  const shareCardPath =
+    activeYear === null
+      ? `/api/wrapped/${encodeURIComponent(profile.username)}/card`
+      : `/api/wrapped/${encodeURIComponent(profile.username)}/card?year=${activeYear}`;
 
   const commitRows = [
     { label: "Commits", value: stats.totals.commits, color: COLORS.accent },
@@ -130,7 +146,15 @@ export function buildSlides(wrapped: Wrapped): Slide[] {
           </div>
 
           <h2 className="rise text-balance text-4xl font-bold leading-[1.05] text-white sm:text-5xl" style={delay(140)}>
-            Your last <span className="gradient-text">twelve months</span> in code.
+            {activeYear === null ? (
+              <>
+                Your last <span className="gradient-text">twelve months</span> in code.
+              </>
+            ) : (
+              <>
+                Your <span className="gradient-text">{activeYear}</span> in code.
+              </>
+            )}
           </h2>
 
           <p className="rise text-sm text-muted" style={delay(220)}>
@@ -433,6 +457,46 @@ export function buildSlides(wrapped: Wrapped): Slide[] {
         </Shell>
       ),
     },
+    ...(years.length > 1
+      ? [
+          {
+            id: "years",
+            nav: "Year by year",
+            render: () => (
+              <Shell kicker="Year by year" wide>
+                <h2 className="rise text-balance text-4xl font-bold leading-tight text-white sm:text-5xl" style={delay(40)}>
+                  Other years you can <span className="gradient-text">unwrap</span>.
+                </h2>
+
+                <div className="rise grid grid-cols-2 gap-3 sm:grid-cols-3" style={delay(140)}>
+                  <Link
+                    href={basePath}
+                    className={`focus-ring flex flex-col gap-1 rounded-2xl border p-4 transition ${
+                      activeYear === null ? "border-accent-soft bg-white/10" : "border-line bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="text-xl font-bold text-white">Last 12 months</span>
+                    <span className="text-xs text-muted">{activeYear === null ? "You are here" : "Rolling view"}</span>
+                  </Link>
+
+                  {years.map((year) => (
+                    <Link
+                      key={year}
+                      href={`${basePath}/${year}`}
+                      className={`focus-ring flex flex-col gap-1 rounded-2xl border p-4 transition ${
+                        activeYear === year ? "border-accent-soft bg-white/10" : "border-line bg-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <span className="text-xl font-bold text-white">{year}</span>
+                      <span className="text-xs text-muted">{activeYear === year ? "You are here" : "View wrapped"}</span>
+                    </Link>
+                  ))}
+                </div>
+              </Shell>
+            ),
+          } satisfies Slide,
+        ]
+      : []),
     {
       id: "share",
       nav: "Share",
@@ -447,8 +511,9 @@ export function buildSlides(wrapped: Wrapped): Slide[] {
           <div className="rise" style={delay(200)}>
             <ShareRow
               username={profile.username}
-              url={`/wrapped/${encodeURIComponent(profile.username)}`}
-              cardUrl={`/api/wrapped/${encodeURIComponent(profile.username)}/card`}
+              url={sharePath}
+              cardUrl={shareCardPath}
+              filename={`github-wrapped-${profile.username}${activeYear === null ? "" : `-${activeYear}`}.png`}
             />
           </div>
         </Shell>

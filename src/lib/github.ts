@@ -181,6 +181,7 @@ const WRAPPED_QUERY = /* GraphQL */ `
       login
       name
       avatarUrl
+      createdAt
       followers {
         totalCount
       }
@@ -242,6 +243,7 @@ type RawUser = {
   login: string;
   name: string | null;
   avatarUrl: string;
+  createdAt: string;
   followers: { totalCount: number };
   repositories: { totalCount: number };
   starrableRepositories: { nodes: { nameWithOwner: string; stargazerCount: number }[] | null } | null;
@@ -326,6 +328,7 @@ export async function fetchWrappedInput(
     username: user.login,
     name: user.name,
     avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt,
     followers: user.followers.totalCount,
     ownedRepositories: user.repositories.totalCount,
     stars,

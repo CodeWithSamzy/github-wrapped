@@ -1,8 +1,9 @@
 import { auth } from "./auth";
 import { GitHubApiError } from "./github";
 import { normalizeLogin } from "./login";
-import { readSnapshot, writeSnapshot } from "./store";
+import { readSnapshot, scopeForWindow, writeSnapshot } from "./store";
 import type { Wrapped } from "./types";
+import { buildWindow, buildYearWindow } from "./window";
 import { buildWrappedForLogin, buildWrappedForViewer } from "./wrapped";
 
 export { normalizeLogin };
@@ -27,19 +28,31 @@ export type WrappedLookupFailure =
 
 export type WrappedLookup = ResolvedWrapped | WrappedLookupFailure;
 
+/** An account cannot have contributions before it existed. */
+function coversYear(createdAt: string, year: number): boolean {
+  const created = Number(createdAt.slice(0, 4));
+  return !Number.isInteger(created) || created <= year;
+}
+
 /**
  * Resolves a wrapped for a login, preferring the cached snapshot and falling
  * back to GitHub when the cache is cold or expired.
+ *
+ * Omit `year` for the rolling last-twelve-months view; pass a year (already
+ * validated by `parseYear`) for that calendar year.
  *
  * Credentials, in order: the signed-in viewer's token when they are looking at
  * their own wrapped, then `GITHUB_PUBLIC_TOKEN` for anyone else. Neither is
  * persisted; they live only for the duration of the request.
  */
-export async function resolveWrapped(raw: string): Promise<WrappedLookup> {
+export async function resolveWrapped(raw: string, year?: number): Promise<WrappedLookup> {
   const login = normalizeLogin(raw);
   if (!login) return { status: "not-found" };
 
-  const cached = await readSnapshot(login);
+  const window = year === undefined ? buildWindow() : buildYearWindow(year);
+  const scope = scopeForWindow(window);
+
+  const cached = await readSnapshot(login, scope);
   if (cached?.fresh) {
     return { status: "ok", wrapped: cached.wrapped, source: "cache", stale: false };
   }
@@ -59,8 +72,13 @@ export async function resolveWrapped(raw: string): Promise<WrappedLookup> {
 
   try {
     const wrapped = isViewer
-      ? await buildWrappedForViewer(token)
-      : await buildWrappedForLogin(token, login);
+      ? await buildWrappedForViewer(token, { window })
+      : await buildWrappedForLogin(token, login, { window });
+
+    if (year !== undefined && !coversYear(wrapped.profile.createdAt, year)) {
+      return { status: "not-found" };
+    }
+
     // Only public builds are cached. A viewer's own build is authenticated, so
     // GitHub folds in their private contributions there; caching it would then
     // serve those totals to everyone who opens /wrapped/<login>.

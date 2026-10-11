@@ -47,6 +47,8 @@ export type WrappedInput = {
   username: string;
   name: string | null;
   avatarUrl: string;
+  /** ISO timestamp of when the GitHub account was created. */
+  createdAt: string;
   followers: number;
   ownedRepositories: number;
   /** Sum of stargazers across the user's owned, non-fork repositories. */
@@ -112,21 +114,27 @@ export type WrappedStats = {
   ownedRepositories: number;
 };
 
+/** `rolling` is the last twelve months; `year` is one UTC calendar year. */
+export type WrappedWindowKind = "rolling" | "year";
+
 export type WrappedWindow = {
   /** ISO 8601 timestamps bounding the queried range. */
   from: string;
   to: string;
+  kind: WrappedWindowKind;
 };
 
 export type WrappedProfile = {
   username: string;
   name: string | null;
   avatarUrl: string;
+  /** ISO timestamp of when the GitHub account was created. */
+  createdAt: string;
 };
 
 /** The serialisable artefact stored in Postgres and rendered by the UI. */
 export type Wrapped = {
-  version: 1;
+  version: 2;
   profile: WrappedProfile;
   window: WrappedWindow;
   /** ISO timestamp of when the snapshot was computed. */
