@@ -40,8 +40,9 @@ export default async function OpengraphImage() {
           <div style={{ display: "flex", marginLeft: 30, fontSize: 54, fontWeight: 700 }}>GitHub Wrapped</div>
         </div>
 
-        <div style={{ display: "flex", fontSize: 84, fontWeight: 700, lineHeight: 1.1 }}>
-          Your year in code, <span style={{ color: "#2fe0a8" }}>wrapped</span>.
+        <div style={{ display: "flex", flexDirection: "row", fontSize: 84, fontWeight: 700, lineHeight: 1.1 }}>
+          <div style={{ display: "flex", marginRight: 22 }}>Your year in code,</div>
+          <div style={{ display: "flex", color: "#2fe0a8" }}>wrapped.</div>
         </div>
 
         <div
