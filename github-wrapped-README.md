@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/logo.svg" width="88" height="88" alt="GitHub Wrapped" />
+</p>
+
 # GitHub Wrapped
 
 A year-in-review for developers. Sign in with GitHub, and get a scrollable
@@ -208,6 +212,20 @@ a bearer token automatically, so there is nothing else to wire up.
 - [x] Public `/wrapped/<username>` pages with caching
 - [x] Rate-limit handling for GitHub API calls
 - [x] Deploy - live at https://githubwrapped-app.vercel.app
+
+## Assets
+
+The mark lives in three places, all the same geometry:
+
+| File | Used for |
+|---|---|
+| `public/logo.svg` | README, anywhere a file is handy |
+| `src/app/icon.svg` | Browser favicon, via the Next.js icon convention |
+| `src/components/LogoMark.tsx` | Inline SVG for pages, plus a div build of the same plate for the Satori routes |
+
+`src/app/apple-icon.tsx` and `src/app/opengraph-image.tsx` render the plate at
+180x180 and 1200x630. There is no binary to keep in sync; change the geometry in
+`LogoMark.tsx` and the two files beside it and everything follows.
 
 ## Credits
 

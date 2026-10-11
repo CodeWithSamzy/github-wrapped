@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { LogoMark } from "@/components/LogoMark";
 import { auth } from "@/lib/auth";
 import { resolveWrapped } from "@/lib/serve";
 import { lookUpWrapped, signInWithGitHub, signOutOfGitHub } from "./actions";
@@ -53,7 +54,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-14 px-6 py-20 sm:py-24">
       <section className="flex flex-col gap-6">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-muted">Year in review</p>
+        <div className="flex items-center gap-3">
+          <LogoMark size={40} />
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-muted">
+            Year in review
+          </p>
+        </div>
 
         <h1 className="text-balance text-5xl font-bold leading-[1.02] text-white sm:text-6xl">
           Your year in code, <span className="gradient-text">wrapped</span>.
